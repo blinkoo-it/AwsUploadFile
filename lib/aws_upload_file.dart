@@ -3,17 +3,18 @@ library aws_upload_file;
 import 'dart:async';
 
 import 'package:aws_upload_file/src/aws_upload_manager.dart';
+import 'package:aws_upload_file/src/entities/exceptions.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+export 'package:aws_upload_file/src/entities/exceptions.dart';
+
 const _defaultChunkSize = 5 * 1024 * 1024;
 const _prefsManagerKey = "awsCurrentUploadManager";
 
-// TODO return different exceptions to handle them correctly
 // TODO add documentation to every method
-
 class AwsUploadFile {
   late SharedPreferences _prefs;
   late int _chunkSize;
@@ -38,13 +39,11 @@ class AwsUploadFile {
     required String completeUploadUrl,
   }) async {
     if (!_initialized) {
-      throw Exception("You have to call first config()");
+      throw const UploadUninitializedException();
     }
 
-    if (_hasUploadInProgress()) {
-      throw Exception(
-        "Upload already in progress, cancel it before starting new upload",
-      );
+    if (hasUploadInProgress()) {
+      throw const UploadAlreadyInProgressException();
     }
 
     currentManager = AwsUploadManager.fromUploadUrls(
@@ -67,12 +66,12 @@ class AwsUploadFile {
 
   ValueStream<double> resumeUploadFile() {
     if (!_initialized) {
-      throw Exception("You have to call first config()");
+      throw const UploadUninitializedException();
+    }
+    if (!hasUploadInProgress()) {
+      throw const UploadNotInProgressException();
     }
 
-    if (!_hasUploadInProgress()) {
-      throw Exception("No upload to resume available");
-    }
     currentManager ??= _retrieveManager();
 
     _subscribeToChunkCompletion();
@@ -84,11 +83,11 @@ class AwsUploadFile {
 
   Future<void> cancelUpload() async {
     if (!_initialized) {
-      throw Exception("You have to call first config()");
+      throw const UploadUninitializedException();
     }
 
-    if (!_hasUploadInProgress()) {
-      throw Exception("No upload to cancel available");
+    if (!hasUploadInProgress()) {
+      throw const UploadNotInProgressException();
     }
 
     currentManager ??= _retrieveManager();
@@ -137,7 +136,7 @@ class AwsUploadFile {
     );
   }
 
-  bool _hasUploadInProgress() {
+  bool hasUploadInProgress() {
     return _getStoredManagerJson() != null;
   }
 

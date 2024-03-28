@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:aws_upload_file/src/entities/complete_multipart_upload.dart';
+import 'package:aws_upload_file/src/entities/exceptions.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:aws_upload_file/src/entities/part_upload.dart';
@@ -79,26 +81,36 @@ class AwsUploadManager {
     _progressSubj.add(sentSizes);
   }
 
-  // TODO everything in try/catch, handle errors
   void startUpload() async {
-    final partsToUpload = partUploads.where((part) => !part.completed);
-    // TODO at the moment, we upload one part per time
-    for (PartUpload partUpload in partsToUpload) {
-      await _uploadChunk(partUpload);
+    // Note: we upload one chunk per time
+    try {
+      final partsToUpload = partUploads.where((part) => !part.completed);
+      for (PartUpload partUpload in partsToUpload) {
+        await _uploadChunk(partUpload);
+      }
+      // upload completed
+      await _completeUpload();
+    } on BaseAwsUploadFileException catch (e) {
+      _progressSubj.addError(e);
     }
-    // chunk upload completed, call complete upload url
-    await _completeUpload();
   }
 
-  // TODO everything in try/catch, handle errors
   void resumeUpload() {
-    _initStreams();
-    startUpload();
+    try {
+      _initStreams();
+      startUpload();
+    } on BaseAwsUploadFileException catch (e) {
+      _progressSubj.addError(e);
+    }
   }
 
   void cancelUpload() {
-    // TODO implement
-    _closeStreams();
+    try {
+      // TODO implement cancel current call
+      _closeStreams();
+    } on BaseAwsUploadFileException catch (e) {
+      _progressSubj.addError(e);
+    }
   }
 
   Future<void> _uploadChunk(PartUpload partUpload) async {
@@ -106,49 +118,79 @@ class AwsUploadManager {
     final int start = index * chunkSize;
     final int end = start + partUpload.size;
 
-    final Uint8List chunkData = await _readChunkFile(start, end);
+    Uint8List chunkData;
+    try {
+      chunkData = await _readChunkFile(start, end);
+    } catch (e) {
+      debugPrint("AWS - error while reading file $e");
+      throw UploadFileReadException(e);
+    }
     // make call
     // TODO add content-type
-    final response = await dio.put(partUpload.url, data: chunkData,
-        onSendProgress: (int sent, int tot) {
-      Map<int, int> value;
-      if (_progressSubj.hasValue) {
-        value = _progressSubj.value;
-        value[partUpload.number] = sent;
-      } else {
-        value = {partUpload.number: sent};
+    try {
+      final response = await dio.put(partUpload.url, data: chunkData,
+          onSendProgress: (int sent, int tot) {
+        Map<int, int> value;
+        if (_progressSubj.hasValue) {
+          value = _progressSubj.value;
+          value[partUpload.number] = sent;
+        } else {
+          value = {partUpload.number: sent};
+        }
+        _progressSubj.add({...value});
+      });
+
+      if (response.statusCode != 200) {
+        debugPrint("AWS - part upload response code ${response.statusCode}");
+        throw UploadPartResponseException(
+          "response status code ${response.statusCode}",
+        );
       }
-      _progressSubj.add({...value});
-    });
 
-    if (response.statusCode != 200) {
-      // TODO handle error
+      final String etag = response.headers["etag"]!.first;
+      partUpload.etag = etag;
+      partUpload.completed = true;
+      _chunkCompletedSubj.add(partUpload.number);
+    } on BaseAwsUploadFileException catch (_) {
+      rethrow;
+    } catch (e) {
+      final String message =
+          "error while uploading part ${partUpload.number} - $e";
+      debugPrint("AWS - $message");
+      throw UploadPartResponseException(message);
     }
-
-    final String etag = response.headers["etag"]!.first;
-    partUpload.etag = etag;
-    partUpload.completed = true;
-    _chunkCompletedSubj.add(partUpload.number);
   }
 
   Future<void> _completeUpload() async {
-    final Map<int, String> etags = partUploads
-        .asMap()
-        .map((key, value) => MapEntry(value.number, value.etag!));
-    final body = CompleteMultipartUploadBody(etags: etags);
+    try {
+      final Map<int, String> etags = partUploads
+          .asMap()
+          .map((key, value) => MapEntry(value.number, value.etag!));
+      final body = CompleteMultipartUploadBody(etags: etags);
 
-    final response = await dio.post(
-      completeUploadUrl,
-      options: Options(
-        headers: {'Content-Type': 'application/xml'},
-      ),
-      data: body.toXML(),
-    );
-    if (response.statusCode != 200) {
-      // TODO handle error
+      final response = await dio.post(
+        completeUploadUrl,
+        options: Options(
+          headers: {'Content-Type': 'application/xml'},
+        ),
+        data: body.toXML(),
+      );
+      if (response.statusCode != 200) {
+        debugPrint(
+            "AWS - complete request response code ${response.statusCode}");
+        throw UploadCompleteResponseException(
+          "response status code ${response.statusCode}",
+        );
+      }
+      // close streams
+      _closeStreams();
+    } on BaseAwsUploadFileException catch (_) {
+      rethrow;
+    } catch (e) {
+      final String message = "error on complete upload request - $e";
+      debugPrint("AWS - $message");
+      throw UploadCompleteResponseException(message);
     }
-    // close streams
-    _closeStreams();
   }
 
   void _closeStreams() {
