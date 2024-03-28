@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:aws_upload_file/src/entities/complete_multipart_upload.dart';
 import 'package:aws_upload_file/src/entities/exceptions.dart';
+import 'package:aws_upload_file/src/extensions/behaviour_subject.extension.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -94,7 +95,7 @@ class AwsUploadManager {
       // upload completed
       await _completeUpload();
     } on BaseAwsUploadFileException catch (e) {
-      _progressSubj.addError(e);
+      _progressSubj.addErrorIfNotClosed(e);
     }
   }
 
@@ -103,7 +104,7 @@ class AwsUploadManager {
       _initStreams();
       startUpload();
     } on BaseAwsUploadFileException catch (e) {
-      _progressSubj.addError(e);
+      _progressSubj.addErrorIfNotClosed(e);
     }
   }
 
@@ -112,7 +113,7 @@ class AwsUploadManager {
       _cancelToken.cancel();
       _closeStreams();
     } on BaseAwsUploadFileException catch (e) {
-      _progressSubj.addError(e);
+      _progressSubj.addErrorIfNotClosed(e);
     }
   }
 
