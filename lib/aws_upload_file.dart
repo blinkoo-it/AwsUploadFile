@@ -1,5 +1,7 @@
 library aws_upload_file;
 
+export 'package:aws_upload_file/src/entities/aws_upload_streams.dart';
+
 import 'dart:async';
 
 import 'package:aws_upload_file/src/aws_upload_manager.dart';
@@ -70,7 +72,7 @@ class AwsUploadFile {
     );
   }
 
-  AwsUploadStreams resumeUploadFile(String id) {
+  AwsUploadStreams resumeUploadFile() {
     if (!_initialized) {
       throw Exception("You have to call first config()");
     }

@@ -103,6 +103,7 @@ class AwsUploadManager {
 
   void cancelUpload() {
     // TODO implement
+    _closeStreams();
   }
 
   Future<void> _uploadChunk(PartUpload partUpload) async {
@@ -145,6 +146,10 @@ class AwsUploadManager {
       // TODO handle error
     }
     // close streams
+    _closeStreams();
+  }
+
+  void _closeStreams() {
     _chunkCompletedSubj.close();
     _progressSubj.close();
     _errorSubj.close();
