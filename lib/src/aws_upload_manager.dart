@@ -19,7 +19,6 @@ class AwsUploadManager {
 
   final BehaviorSubject<Map<int, int>> _progressSubj;
   final BehaviorSubject<int> _chunkCompletedSubj;
-  final BehaviorSubject<Exception> _errorSubj;
 
   final dio = Dio();
 
@@ -39,8 +38,6 @@ class AwsUploadManager {
 
   ValueStream<int> get chunkCompletedStream => _chunkCompletedSubj.shareValue();
 
-  ValueStream<Exception> get errorStream => _errorSubj.shareValue();
-
   AwsUploadManager({
     required this.chunkSize,
     required this.partUploads,
@@ -49,8 +46,7 @@ class AwsUploadManager {
     required this.fileSize,
     this.onDone,
   })  : _progressSubj = BehaviorSubject(),
-        _chunkCompletedSubj = BehaviorSubject(),
-        _errorSubj = BehaviorSubject() {
+        _chunkCompletedSubj = BehaviorSubject() {
     _initStreams();
   }
 
@@ -71,8 +67,7 @@ class AwsUploadManager {
                 ))
             .toList(),
         _progressSubj = BehaviorSubject(),
-        _chunkCompletedSubj = BehaviorSubject(),
-        _errorSubj = BehaviorSubject() {
+        _chunkCompletedSubj = BehaviorSubject() {
     _initStreams();
   }
 
@@ -159,7 +154,6 @@ class AwsUploadManager {
   void _closeStreams() {
     _chunkCompletedSubj.close();
     _progressSubj.close();
-    _errorSubj.close();
   }
 
   Future<Uint8List> _readChunkFile(int start, int end) async {

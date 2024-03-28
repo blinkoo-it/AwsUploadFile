@@ -1,13 +1,11 @@
 library aws_upload_file;
 
-export 'package:aws_upload_file/src/entities/aws_upload_streams.dart';
-
 import 'dart:async';
 
 import 'package:aws_upload_file/src/aws_upload_manager.dart';
-import 'package:aws_upload_file/src/entities/aws_upload_streams.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _defaultChunkSize = 5 * 1024 * 1024;
@@ -33,7 +31,7 @@ class AwsUploadFile {
     }
   }
 
-  Future<AwsUploadStreams> uploadFile(
+  Future<ValueStream<double>> uploadFile(
     XFile file, {
     required int fileSize,
     required List<String> partUploadUrls,
@@ -64,13 +62,10 @@ class AwsUploadFile {
 
     _subscribeToChunkCompletion();
 
-    return AwsUploadStreams(
-      progressStream: currentManager!.progressStream,
-      errorStream: currentManager!.errorStream,
-    );
+    return currentManager!.progressStream;
   }
 
-  AwsUploadStreams resumeUploadFile() {
+  ValueStream<double> resumeUploadFile() {
     if (!_initialized) {
       throw Exception("You have to call first config()");
     }
@@ -84,10 +79,7 @@ class AwsUploadFile {
 
     currentManager!.resumeUpload();
 
-    return AwsUploadStreams(
-      progressStream: currentManager!.progressStream,
-      errorStream: currentManager!.errorStream,
-    );
+    return currentManager!.progressStream;
   }
 
   Future<void> cancelUpload() async {
