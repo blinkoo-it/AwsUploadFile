@@ -7,6 +7,7 @@ import 'package:aws_upload_file/src/entities/exceptions.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:mime/mime.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:aws_upload_file/src/entities/part_upload.dart';
@@ -126,19 +127,25 @@ class AwsUploadManager {
       throw UploadFileReadException(e);
     }
     // make call
-    // TODO add content-type
+    final mimeType = lookupMimeType(file.path);
     try {
-      final response = await dio.put(partUpload.url, data: chunkData,
-          onSendProgress: (int sent, int tot) {
-        Map<int, int> value;
-        if (_progressSubj.hasValue) {
-          value = _progressSubj.value;
-          value[partUpload.number] = sent;
-        } else {
-          value = {partUpload.number: sent};
-        }
-        _progressSubj.add({...value});
-      });
+      final response = await dio.put(
+        partUpload.url,
+        options: Options(headers: {
+          Headers.contentTypeHeader: mimeType,
+        }),
+        data: chunkData,
+        onSendProgress: (int sent, int tot) {
+          Map<int, int> value;
+          if (_progressSubj.hasValue) {
+            value = _progressSubj.value;
+            value[partUpload.number] = sent;
+          } else {
+            value = {partUpload.number: sent};
+          }
+          _progressSubj.add({...value});
+        },
+      );
 
       if (response.statusCode != 200) {
         debugPrint("AWS - part upload response code ${response.statusCode}");
