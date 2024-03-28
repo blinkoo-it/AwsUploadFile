@@ -12,14 +12,25 @@ class UploadProgressIndicator extends StatelessWidget {
     return StreamBuilder(
       stream: uploadStreams!.progressStream,
       builder: (context, snapshot) {
-        double progress = snapshot.hasData ? snapshot.data! : 0.0;
-        return Column(
-          children: [
-            Text(
-              'Your upload progress: ${progress * 100}%',
-            ),
-            LinearProgressIndicator(value: progress),
-          ],
+        if (snapshot.connectionState == ConnectionState.done) {
+          return const Text("Upload completed");
+        }
+        final double progress = snapshot.hasData ? snapshot.data! : 0.0;
+        final int percentage = (progress * 100).round();
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            children: [
+              Text(
+                'Your upload progress: $percentage%',
+              ),
+              LinearProgressIndicator(value: progress),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16.0),
+              ),
+              CircularProgressIndicator(value: progress),
+            ],
+          ),
         );
       },
     );

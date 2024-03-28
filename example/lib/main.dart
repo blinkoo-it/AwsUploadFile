@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aws_upload_file/aws_upload_file.dart';
 import 'package:example/upload_progress_indicator.dart';
+import 'package:example/urls.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -44,26 +45,27 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
 
     _awsUploadFile = AwsUploadFile();
-    _awsUploadFile.config().then((_) => print("config completed"));
+    _awsUploadFile.config().then((_) => debugPrint("LOGGO - config completed"));
   }
 
   void _startUpload() async {
-    final List<String> partUploadUrls = [];
-    const String completeUploadUrl = "";
-
     FilePickerResult? result =
         await FilePicker.platform.pickFiles(type: FileType.video);
     if (result == null) return;
 
     final xFile = result.files.single.xFile;
-    print(xFile.path);
+    final fileSize = await xFile.length();
+    debugPrint("LOGGO - filePath ${xFile.path}");
 
-    setState(() async {
-      _streams = await _awsUploadFile.uploadFile(
-        xFile,
-        partUploadUrls: partUploadUrls,
-        completeUploadUrl: completeUploadUrl,
-      );
+    AwsUploadStreams streams = await _awsUploadFile.uploadFile(
+      xFile,
+      partUploadUrls: partUploadUrls,
+      completeUploadUrl: completeUploadUrl,
+      fileSize: fileSize,
+    );
+
+    setState(() {
+      _streams = streams;
     });
 
     _createSubs();
@@ -88,14 +90,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _createSubs() {
     _progressSub = _streams!.progressStream.listen(
-      (progress) => print("progress $progress"),
+      (_) {},
       onDone: () {
-        print("upload completed");
+        debugPrint("LOGGO - upload completed");
       },
     );
 
     _errorSub = _streams!.errorStream.listen(
-      (error) => print("error $error"),
+      (error) => debugPrint("LOGGO - error $error"),
     );
   }
 

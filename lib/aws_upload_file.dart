@@ -35,7 +35,7 @@ class AwsUploadFile {
 
   Future<AwsUploadStreams> uploadFile(
     XFile file, {
-    int? fileSize,
+    required int fileSize,
     required List<String> partUploadUrls,
     required String completeUploadUrl,
   }) async {
@@ -48,8 +48,6 @@ class AwsUploadFile {
         "Upload already in progress, cancel it before starting new upload",
       );
     }
-
-    fileSize ??= await file.length();
 
     currentManager = AwsUploadManager.fromUploadUrls(
       chunkSize: _chunkSize,
@@ -139,7 +137,10 @@ class AwsUploadFile {
     currentSubscription?.cancel();
     // every time a request is completed, save the current manager status to the store
     currentSubscription = currentManager?.chunkCompletedStream.listen(
-      (_) => _storeManager(),
+      (i) {
+        debugPrint("AWS - chunk completed $i");
+        _storeManager();
+      },
       onDone: _cancelStoredManager,
     );
   }
