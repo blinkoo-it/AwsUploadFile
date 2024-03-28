@@ -41,6 +41,8 @@ class AwsUploadManager {
 
   ValueStream<int> get chunkCompletedStream => _chunkCompletedSubj.shareValue();
 
+  final CancelToken _cancelToken = CancelToken();
+
   AwsUploadManager({
     required this.chunkSize,
     required this.partUploads,
@@ -107,7 +109,7 @@ class AwsUploadManager {
 
   void cancelUpload() {
     try {
-      // TODO implement cancel current call
+      _cancelToken.cancel();
       _closeStreams();
     } on BaseAwsUploadFileException catch (e) {
       _progressSubj.addError(e);
@@ -134,6 +136,7 @@ class AwsUploadManager {
         options: Options(headers: {
           Headers.contentTypeHeader: mimeType,
         }),
+        cancelToken: _cancelToken,
         data: chunkData,
         onSendProgress: (int sent, int tot) {
           Map<int, int> value;

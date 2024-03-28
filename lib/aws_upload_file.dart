@@ -14,7 +14,7 @@ export 'package:aws_upload_file/src/entities/exceptions.dart';
 const _defaultChunkSize = 5 * 1024 * 1024;
 const _prefsManagerKey = "awsCurrentUploadManager";
 
-// TODO add documentation to every method
+// TODO add documentation to every public method
 class AwsUploadFile {
   late SharedPreferences _prefs;
   late int _chunkSize;
