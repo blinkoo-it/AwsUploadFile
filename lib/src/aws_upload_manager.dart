@@ -17,18 +17,25 @@ class AwsUploadManager {
   final int fileSize;
   final void Function()? onDone;
 
-  final BehaviorSubject<int> _progressSubj;
+  final BehaviorSubject<Map<int, int>> _progressSubj;
   final BehaviorSubject<int> _chunkCompletedSubj;
   final BehaviorSubject<Exception> _errorSubj;
 
   final dio = Dio();
 
   ValueStream<int> get _progressSizeStream => _progressSubj
-      .transform(ScanStreamTransformer((sum, value, index) => sum + value, 0))
+      // sum the sent bytes for each part
+      .map((map) => map.values.fold(0, (a, b) => a + b))
       .shareValue();
 
-  ValueStream<double> get progressStream =>
-      _progressSizeStream.map((sum) => sum / fileSize).shareValue();
+  ValueStream<double> get progressStream => _progressSizeStream
+      // calculate percentage of sent bytes
+      .map((sum) => sum / fileSize)
+      // avoid to emit changes lesser than 0,5%
+      .distinct(
+        (old, current) => (old - current).abs() < 0.005,
+      )
+      .shareValue();
 
   ValueStream<int> get chunkCompletedStream => _chunkCompletedSubj.shareValue();
 
@@ -70,11 +77,11 @@ class AwsUploadManager {
   }
 
   _initStreams() {
-    final int sentSize = partUploads
-        .where((part) => part.completed)
-        .map((part) => part.size)
-        .fold(0, (sum, value) => sum + value);
-    _progressSubj.add(sentSize);
+    final Map<int, int> sentSizes = {
+      for (PartUpload p in partUploads.where((part) => part.completed))
+        p.number: p.size
+    };
+    _progressSubj.add(sentSizes);
   }
 
   // TODO everything in try/catch, handle errors
@@ -90,14 +97,7 @@ class AwsUploadManager {
 
   // TODO everything in try/catch, handle errors
   void resumeUpload() {
-    if (progressStream.hasValue) {
-      // restore upload progress stream
-      final int actualProgress = partUploads
-          .where((part) => part.completed)
-          .fold(0, (sum, part) => sum + part.size);
-      final int diff = actualProgress - _progressSizeStream.value;
-      _progressSubj.add(diff);
-    }
+    _initStreams();
     startUpload();
   }
 
@@ -113,11 +113,18 @@ class AwsUploadManager {
 
     final Uint8List chunkData = await _readChunkFile(start, end);
     // make call
-    final response = await dio.put(
-      partUpload.url,
-      data: chunkData,
-      onSendProgress: (int sent, int tot) => _progressSubj.add(sent),
-    );
+    // TODO add content-type
+    final response = await dio.put(partUpload.url, data: chunkData,
+        onSendProgress: (int sent, int tot) {
+      Map<int, int> value;
+      if (_progressSubj.hasValue) {
+        value = _progressSubj.value;
+        value[partUpload.number] = sent;
+      } else {
+        value = {partUpload.number: sent};
+      }
+      _progressSubj.add({...value});
+    });
 
     if (response.statusCode != 200) {
       // TODO handle error
@@ -160,10 +167,11 @@ class AwsUploadManager {
         .openRead(start, end)
         .transform(
           ScanStreamTransformer(
-            (sum, value, index) => sum..addAll(value),
-            Uint8List(0),
+            (builder, value, _) => builder..add(value),
+            BytesBuilder(),
           ),
         )
+        .map((builder) => builder.toBytes())
         .last;
   }
 
