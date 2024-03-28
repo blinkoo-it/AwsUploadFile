@@ -1,24 +1,21 @@
-name: azure_upload_file
-description: A Flutter package to upload file on azure with sas link.
-version: 1.3.2
+name: aws_upload_file
+description: A Flutter package to upload file on aws with multipart pre-signed urls.
+version: 1.0.0
 homepage: "flutter"
+publish_to: 'none'
 
 environment:
-  sdk: ">=2.16.1 <3.0.0"
-  flutter: ">=1.17.0"
+  sdk: '>=3.3.1 <4.0.0'
+  flutter: ">=3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  async: ^2.11.0
-  chunked_stream: ^1.4.2
-  cross_file: ^0.3.3+8
-  crypto: ^3.0.3
-  http: ^1.1.2
-  mime_type: ^1.0.0
-  rxdart: ^0.27.7
   shared_preferences: ^2.2.2
+  dio: ^5.4.2
+  cross_file: ^0.3.4+1
+  rxdart: ^0.27.7
 
 dev_dependencies:
   flutter_test:
