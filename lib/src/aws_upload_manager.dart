@@ -125,8 +125,8 @@ class AwsUploadManager {
     Uint8List chunkData;
     try {
       chunkData = await _readChunkFile(start, end);
-    } catch (e) {
-      debugPrint("AWS - error while reading file $e");
+    } catch (e, stackTrace) {
+      debugPrint("AWS - error while reading file $e - $stackTrace");
       throw UploadFileReadException(e);
     }
     // make call
@@ -164,10 +164,10 @@ class AwsUploadManager {
       _chunkCompletedSubj.add(partUpload.number);
     } on BaseAwsUploadFileException catch (_) {
       rethrow;
-    } catch (e) {
+    } catch (e, stackTrace) {
       final String message =
           "error while uploading part ${partUpload.number} - $e";
-      debugPrint("AWS - $message");
+      debugPrint("AWS - $message - $stackTrace");
       throw UploadPartResponseException(message);
     }
   }
@@ -197,9 +197,9 @@ class AwsUploadManager {
       _closeStreams();
     } on BaseAwsUploadFileException catch (_) {
       rethrow;
-    } catch (e) {
+    } catch (e, stackTrace) {
       final String message = "error on complete upload request - $e";
-      debugPrint("AWS - $message");
+      debugPrint("AWS - $message - $stackTrace");
       throw UploadCompleteResponseException(message);
     }
   }
