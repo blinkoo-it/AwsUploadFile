@@ -1,19 +1,22 @@
-import 'package:aws_upload_file/aws_upload_file.dart';
 import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
 
 class UploadProgressIndicator extends StatelessWidget {
-  final AwsUploadStreams? uploadStreams;
+  final ValueStream<double>? uploadStream;
 
-  const UploadProgressIndicator({super.key, this.uploadStreams});
+  const UploadProgressIndicator({super.key, this.uploadStream});
 
   @override
   Widget build(BuildContext context) {
-    if (uploadStreams == null) return const Text("No upload running");
+    if (uploadStream == null) return const Text("No upload running");
     return StreamBuilder(
-      stream: uploadStreams!.progressStream,
+      stream: uploadStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           return const Text("Upload completed");
+        }
+        if (snapshot.hasError) {
+          return Text("Error: ${snapshot.error}");
         }
         final double progress = snapshot.hasData ? snapshot.data! : 0.0;
         final int percentage = (progress * 100).round();

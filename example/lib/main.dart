@@ -5,6 +5,7 @@ import 'package:example/upload_progress_indicator.dart';
 import 'package:example/urls.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,9 +37,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late AwsUploadFile _awsUploadFile;
-  AwsUploadStreams? _streams;
+  ValueStream<double>? _uploadStream;
   StreamSubscription? _progressSub;
-  StreamSubscription? _errorSub;
 
   @override
   void initState() {
@@ -46,6 +46,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _awsUploadFile = AwsUploadFile();
     _awsUploadFile.config().then((_) => debugPrint("LOGGO - config completed"));
+  }
+
+  @override
+  void dispose() {
+    _cancelSubs();
+
+    super.dispose();
   }
 
   void _startUpload() async {
@@ -57,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final fileSize = await xFile.length();
     debugPrint("LOGGO - filePath ${xFile.path}");
 
-    AwsUploadStreams streams = await _awsUploadFile.uploadFile(
+    final stream = await _awsUploadFile.uploadFile(
       xFile,
       partUploadUrls: partUploadUrls,
       completeUploadUrl: completeUploadUrl,
@@ -65,18 +72,18 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     setState(() {
-      _streams = streams;
+      _uploadStream = stream;
     });
 
-    _createSubs();
+    _createSubscription();
   }
 
   void _resumeVideo() async {
     _cancelSubs();
     setState(() {
-      _streams = _awsUploadFile.resumeUploadFile();
+      _uploadStream = _awsUploadFile.resumeUploadFile();
     });
-    _createSubs();
+    _createSubscription();
   }
 
   void _cancelVideo() async {
@@ -84,26 +91,20 @@ class _MyHomePageState extends State<MyHomePage> {
     _cancelSubs();
 
     setState(() {
-      _streams = null;
+      _uploadStream = null;
     });
   }
 
-  void _createSubs() {
-    _progressSub = _streams!.progressStream.listen(
-      (_) {},
-      onDone: () {
-        debugPrint("LOGGO - upload completed");
-      },
-    );
-
-    _errorSub = _streams!.errorStream.listen(
-      (error) => debugPrint("LOGGO - error $error"),
-    );
+  void _createSubscription() {
+    _progressSub = _uploadStream!.listen((_) {}, onDone: () {
+      debugPrint("LOGGO - upload completed");
+    }, onError: (error) {
+      debugPrint("LOGGO - error $error");
+    });
   }
 
   void _cancelSubs() {
     _progressSub?.cancel();
-    _errorSub?.cancel();
   }
 
   @override
@@ -116,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            UploadProgressIndicator(uploadStreams: _streams),
+            UploadProgressIndicator(uploadStream: _uploadStream),
             TextButton(
               onPressed: _startUpload,
               child: const Text(
