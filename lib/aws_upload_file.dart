@@ -20,8 +20,11 @@ class AwsUploadFile {
   Dio? dio;
 
   bool _initialized = false;
-  AwsUploadManager? currentManager;
-  StreamSubscription? currentSubscription;
+  AwsUploadManager? _currentManager;
+  StreamSubscription? _currentSubscription;
+
+  bool get isInitialized => _initialized;
+  int get chunkSize => _chunkSize;
 
   AwsUploadFile({
     this.prefs,
@@ -32,8 +35,8 @@ class AwsUploadFile {
     if (!_initialized) {
       dio ??= Dio();
       prefs ??= await SharedPreferences.getInstance();
-      _initialized = true;
       _chunkSize = chunkSize;
+      _initialized = true;
     }
   }
 
@@ -51,7 +54,7 @@ class AwsUploadFile {
       throw const UploadAlreadyInProgressException();
     }
 
-    currentManager = AwsUploadManager.fromUploadUrls(
+    _currentManager = AwsUploadManager.fromUploadUrls(
       dio: dio!,
       sharedPreferences: prefs!,
       chunkSize: _chunkSize,
@@ -64,11 +67,11 @@ class AwsUploadFile {
 
     await _storeManager();
 
-    currentManager!.startUpload();
+    _currentManager!.startUpload();
 
     _subscribeToChunkCompletion();
 
-    return currentManager!.progressStream;
+    return _currentManager!.progressStream;
   }
 
   ValueStream<double> resumeUploadFile() {
@@ -79,13 +82,13 @@ class AwsUploadFile {
       throw const UploadNotInProgressException();
     }
 
-    currentManager ??= _retrieveManager();
+    _currentManager ??= _retrieveManager();
 
     _subscribeToChunkCompletion();
 
-    currentManager!.resumeUpload();
+    _currentManager!.resumeUpload();
 
-    return currentManager!.progressStream;
+    return _currentManager!.progressStream;
   }
 
   Future<void> cancelUpload() async {
@@ -97,18 +100,18 @@ class AwsUploadFile {
       throw const UploadNotInProgressException();
     }
 
-    currentManager ??= _retrieveManager();
+    _currentManager ??= _retrieveManager();
 
-    currentSubscription?.cancel();
-    currentManager?.cancelUpload();
+    _currentSubscription?.cancel();
+    _currentManager?.cancelUpload();
     _cancelStoredManager();
-    currentSubscription = null;
-    currentManager = null;
+    _currentSubscription = null;
+    _currentManager = null;
   }
 
   Future<void> _storeManager() async {
-    final result =
-        await prefs!.setString(prefsManagerKey, currentManager?.toJson() ?? "");
+    final result = await prefs!
+        .setString(prefsManagerKey, _currentManager?.toJson() ?? "");
     if (!result) {
       debugPrint(
         "AWS-UPLOAD-FILE: upload status not saved in shared preferences",
@@ -137,9 +140,9 @@ class AwsUploadFile {
   }
 
   void _subscribeToChunkCompletion() {
-    currentSubscription?.cancel();
+    _currentSubscription?.cancel();
     // every time a request is completed, save the current manager status to the store
-    currentSubscription = currentManager?.chunkCompletedStream.listen(
+    _currentSubscription = _currentManager?.chunkCompletedStream.listen(
       (i) {
         debugPrint("AWS - chunk completed $i");
         _storeManager();
