@@ -189,6 +189,7 @@ class AwsUploadManager {
         options: Options(
           headers: {'Content-Type': 'application/xml'},
         ),
+        cancelToken: _cancelToken,
         data: body.toXML(),
       );
       if (response.statusCode != 200) {

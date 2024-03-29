@@ -4,7 +4,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i8;
+import 'dart:convert' as _i13;
+import 'dart:typed_data' as _i14;
 
+import 'package:cross_file/cross_file.dart' as _i11;
 import 'package:dio/src/adapter.dart' as _i3;
 import 'package:dio/src/cancel_token.dart' as _i9;
 import 'package:dio/src/dio.dart' as _i7;
@@ -13,6 +16,7 @@ import 'package:dio/src/options.dart' as _i2;
 import 'package:dio/src/response.dart' as _i6;
 import 'package:dio/src/transformer.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:mockito/src/dummies.dart' as _i12;
 import 'package:shared_preferences/shared_preferences.dart' as _i10;
 
 // ignore_for_file: type=lint
@@ -71,6 +75,37 @@ class _FakeInterceptors_3 extends _i1.SmartFake implements _i5.Interceptors {
 
 class _FakeResponse_4<T1> extends _i1.SmartFake implements _i6.Response<T1> {
   _FakeResponse_4(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeDateTime_5 extends _i1.SmartFake implements DateTime {
+  _FakeDateTime_5(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeUri_6 extends _i1.SmartFake implements Uri {
+  _FakeUri_6(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeRequestOptions_7 extends _i1.SmartFake
+    implements _i2.RequestOptions {
+  _FakeRequestOptions_7(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -1254,4 +1289,630 @@ class MockSharedPreferences extends _i1.Mock implements _i10.SharedPreferences {
         returnValue: _i8.Future<void>.value(),
         returnValueForMissingStub: _i8.Future<void>.value(),
       ) as _i8.Future<void>);
+}
+
+/// A class which mocks [XFile].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockXFile extends _i1.Mock implements _i11.XFile {
+  @override
+  String get path => (super.noSuchMethod(
+        Invocation.getter(#path),
+        returnValue: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#path),
+        ),
+        returnValueForMissingStub: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#path),
+        ),
+      ) as String);
+
+  @override
+  String get name => (super.noSuchMethod(
+        Invocation.getter(#name),
+        returnValue: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#name),
+        ),
+        returnValueForMissingStub: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#name),
+        ),
+      ) as String);
+
+  @override
+  _i8.Future<void> saveTo(String? path) => (super.noSuchMethod(
+        Invocation.method(
+          #saveTo,
+          [path],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
+  _i8.Future<int> length() => (super.noSuchMethod(
+        Invocation.method(
+          #length,
+          [],
+        ),
+        returnValue: _i8.Future<int>.value(0),
+        returnValueForMissingStub: _i8.Future<int>.value(0),
+      ) as _i8.Future<int>);
+
+  @override
+  _i8.Future<String> readAsString(
+          {_i13.Encoding? encoding = const _i13.Utf8Codec()}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #readAsString,
+          [],
+          {#encoding: encoding},
+        ),
+        returnValue: _i8.Future<String>.value(_i12.dummyValue<String>(
+          this,
+          Invocation.method(
+            #readAsString,
+            [],
+            {#encoding: encoding},
+          ),
+        )),
+        returnValueForMissingStub:
+            _i8.Future<String>.value(_i12.dummyValue<String>(
+          this,
+          Invocation.method(
+            #readAsString,
+            [],
+            {#encoding: encoding},
+          ),
+        )),
+      ) as _i8.Future<String>);
+
+  @override
+  _i8.Future<_i14.Uint8List> readAsBytes() => (super.noSuchMethod(
+        Invocation.method(
+          #readAsBytes,
+          [],
+        ),
+        returnValue: _i8.Future<_i14.Uint8List>.value(_i14.Uint8List(0)),
+        returnValueForMissingStub:
+            _i8.Future<_i14.Uint8List>.value(_i14.Uint8List(0)),
+      ) as _i8.Future<_i14.Uint8List>);
+
+  @override
+  _i8.Stream<_i14.Uint8List> openRead([
+    int? start,
+    int? end,
+  ]) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #openRead,
+          [
+            start,
+            end,
+          ],
+        ),
+        returnValue: _i8.Stream<_i14.Uint8List>.empty(),
+        returnValueForMissingStub: _i8.Stream<_i14.Uint8List>.empty(),
+      ) as _i8.Stream<_i14.Uint8List>);
+
+  @override
+  _i8.Future<DateTime> lastModified() => (super.noSuchMethod(
+        Invocation.method(
+          #lastModified,
+          [],
+        ),
+        returnValue: _i8.Future<DateTime>.value(_FakeDateTime_5(
+          this,
+          Invocation.method(
+            #lastModified,
+            [],
+          ),
+        )),
+        returnValueForMissingStub: _i8.Future<DateTime>.value(_FakeDateTime_5(
+          this,
+          Invocation.method(
+            #lastModified,
+            [],
+          ),
+        )),
+      ) as _i8.Future<DateTime>);
+}
+
+/// A class which mocks [RequestOptions].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockRequestOptions extends _i1.Mock implements _i2.RequestOptions {
+  @override
+  set sourceStackTrace(StackTrace? _sourceStackTrace) => super.noSuchMethod(
+        Invocation.setter(
+          #sourceStackTrace,
+          _sourceStackTrace,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set data(dynamic _data) => super.noSuchMethod(
+        Invocation.setter(
+          #data,
+          _data,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  String get path => (super.noSuchMethod(
+        Invocation.getter(#path),
+        returnValue: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#path),
+        ),
+        returnValueForMissingStub: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#path),
+        ),
+      ) as String);
+
+  @override
+  set path(String? _path) => super.noSuchMethod(
+        Invocation.setter(
+          #path,
+          _path,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set cancelToken(_i9.CancelToken? _cancelToken) => super.noSuchMethod(
+        Invocation.setter(
+          #cancelToken,
+          _cancelToken,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set onReceiveProgress(_i2.ProgressCallback? _onReceiveProgress) =>
+      super.noSuchMethod(
+        Invocation.setter(
+          #onReceiveProgress,
+          _onReceiveProgress,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set onSendProgress(_i2.ProgressCallback? _onSendProgress) =>
+      super.noSuchMethod(
+        Invocation.setter(
+          #onSendProgress,
+          _onSendProgress,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  Uri get uri => (super.noSuchMethod(
+        Invocation.getter(#uri),
+        returnValue: _FakeUri_6(
+          this,
+          Invocation.getter(#uri),
+        ),
+        returnValueForMissingStub: _FakeUri_6(
+          this,
+          Invocation.getter(#uri),
+        ),
+      ) as Uri);
+
+  @override
+  String get method => (super.noSuchMethod(
+        Invocation.getter(#method),
+        returnValue: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#method),
+        ),
+        returnValueForMissingStub: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#method),
+        ),
+      ) as String);
+
+  @override
+  set method(String? _method) => super.noSuchMethod(
+        Invocation.setter(
+          #method,
+          _method,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  bool get preserveHeaderCase => (super.noSuchMethod(
+        Invocation.getter(#preserveHeaderCase),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
+
+  @override
+  set preserveHeaderCase(bool? _preserveHeaderCase) => super.noSuchMethod(
+        Invocation.setter(
+          #preserveHeaderCase,
+          _preserveHeaderCase,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i2.ResponseType get responseType => (super.noSuchMethod(
+        Invocation.getter(#responseType),
+        returnValue: _i2.ResponseType.json,
+        returnValueForMissingStub: _i2.ResponseType.json,
+      ) as _i2.ResponseType);
+
+  @override
+  set responseType(_i2.ResponseType? _responseType) => super.noSuchMethod(
+        Invocation.setter(
+          #responseType,
+          _responseType,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i2.ValidateStatus get validateStatus => (super.noSuchMethod(
+        Invocation.getter(#validateStatus),
+        returnValue: (int? status) => false,
+        returnValueForMissingStub: (int? status) => false,
+      ) as _i2.ValidateStatus);
+
+  @override
+  set validateStatus(_i2.ValidateStatus? _validateStatus) => super.noSuchMethod(
+        Invocation.setter(
+          #validateStatus,
+          _validateStatus,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  bool get receiveDataWhenStatusError => (super.noSuchMethod(
+        Invocation.getter(#receiveDataWhenStatusError),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
+
+  @override
+  set receiveDataWhenStatusError(bool? _receiveDataWhenStatusError) =>
+      super.noSuchMethod(
+        Invocation.setter(
+          #receiveDataWhenStatusError,
+          _receiveDataWhenStatusError,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  Map<String, dynamic> get extra => (super.noSuchMethod(
+        Invocation.getter(#extra),
+        returnValue: <String, dynamic>{},
+        returnValueForMissingStub: <String, dynamic>{},
+      ) as Map<String, dynamic>);
+
+  @override
+  set extra(Map<String, dynamic>? _extra) => super.noSuchMethod(
+        Invocation.setter(
+          #extra,
+          _extra,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  bool get followRedirects => (super.noSuchMethod(
+        Invocation.getter(#followRedirects),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
+
+  @override
+  set followRedirects(bool? _followRedirects) => super.noSuchMethod(
+        Invocation.setter(
+          #followRedirects,
+          _followRedirects,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  int get maxRedirects => (super.noSuchMethod(
+        Invocation.getter(#maxRedirects),
+        returnValue: 0,
+        returnValueForMissingStub: 0,
+      ) as int);
+
+  @override
+  set maxRedirects(int? _maxRedirects) => super.noSuchMethod(
+        Invocation.setter(
+          #maxRedirects,
+          _maxRedirects,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  bool get persistentConnection => (super.noSuchMethod(
+        Invocation.getter(#persistentConnection),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
+
+  @override
+  set persistentConnection(bool? _persistentConnection) => super.noSuchMethod(
+        Invocation.setter(
+          #persistentConnection,
+          _persistentConnection,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set requestEncoder(_i2.RequestEncoder? _requestEncoder) => super.noSuchMethod(
+        Invocation.setter(
+          #requestEncoder,
+          _requestEncoder,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set responseDecoder(_i2.ResponseDecoder? _responseDecoder) =>
+      super.noSuchMethod(
+        Invocation.setter(
+          #responseDecoder,
+          _responseDecoder,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i2.ListFormat get listFormat => (super.noSuchMethod(
+        Invocation.getter(#listFormat),
+        returnValue: _i2.ListFormat.csv,
+        returnValueForMissingStub: _i2.ListFormat.csv,
+      ) as _i2.ListFormat);
+
+  @override
+  set listFormat(_i2.ListFormat? _listFormat) => super.noSuchMethod(
+        Invocation.setter(
+          #listFormat,
+          _listFormat,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  Map<String, dynamic> get headers => (super.noSuchMethod(
+        Invocation.getter(#headers),
+        returnValue: <String, dynamic>{},
+        returnValueForMissingStub: <String, dynamic>{},
+      ) as Map<String, dynamic>);
+
+  @override
+  set headers(Map<String, dynamic>? headers) => super.noSuchMethod(
+        Invocation.setter(
+          #headers,
+          headers,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set sendTimeout(Duration? value) => super.noSuchMethod(
+        Invocation.setter(
+          #sendTimeout,
+          value,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set receiveTimeout(Duration? value) => super.noSuchMethod(
+        Invocation.setter(
+          #receiveTimeout,
+          value,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set contentType(String? contentType) => super.noSuchMethod(
+        Invocation.setter(
+          #contentType,
+          contentType,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  Map<String, dynamic> get queryParameters => (super.noSuchMethod(
+        Invocation.getter(#queryParameters),
+        returnValue: <String, dynamic>{},
+        returnValueForMissingStub: <String, dynamic>{},
+      ) as Map<String, dynamic>);
+
+  @override
+  set queryParameters(Map<String, dynamic>? _queryParameters) =>
+      super.noSuchMethod(
+        Invocation.setter(
+          #queryParameters,
+          _queryParameters,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  String get baseUrl => (super.noSuchMethod(
+        Invocation.getter(#baseUrl),
+        returnValue: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#baseUrl),
+        ),
+        returnValueForMissingStub: _i12.dummyValue<String>(
+          this,
+          Invocation.getter(#baseUrl),
+        ),
+      ) as String);
+
+  @override
+  set baseUrl(String? value) => super.noSuchMethod(
+        Invocation.setter(
+          #baseUrl,
+          value,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  set connectTimeout(Duration? value) => super.noSuchMethod(
+        Invocation.setter(
+          #connectTimeout,
+          value,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i2.RequestOptions copyWith({
+    String? method,
+    Duration? sendTimeout,
+    Duration? receiveTimeout,
+    Duration? connectTimeout,
+    dynamic data,
+    String? path,
+    Map<String, dynamic>? queryParameters,
+    String? baseUrl,
+    _i2.ProgressCallback? onReceiveProgress,
+    _i2.ProgressCallback? onSendProgress,
+    _i9.CancelToken? cancelToken,
+    Map<String, dynamic>? extra,
+    Map<String, dynamic>? headers,
+    bool? preserveHeaderCase,
+    _i2.ResponseType? responseType,
+    String? contentType,
+    _i2.ValidateStatus? validateStatus,
+    bool? receiveDataWhenStatusError,
+    bool? followRedirects,
+    int? maxRedirects,
+    bool? persistentConnection,
+    _i2.RequestEncoder? requestEncoder,
+    _i2.ResponseDecoder? responseDecoder,
+    _i2.ListFormat? listFormat,
+    bool? setRequestContentTypeWhenNoPayload,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #copyWith,
+          [],
+          {
+            #method: method,
+            #sendTimeout: sendTimeout,
+            #receiveTimeout: receiveTimeout,
+            #connectTimeout: connectTimeout,
+            #data: data,
+            #path: path,
+            #queryParameters: queryParameters,
+            #baseUrl: baseUrl,
+            #onReceiveProgress: onReceiveProgress,
+            #onSendProgress: onSendProgress,
+            #cancelToken: cancelToken,
+            #extra: extra,
+            #headers: headers,
+            #preserveHeaderCase: preserveHeaderCase,
+            #responseType: responseType,
+            #contentType: contentType,
+            #validateStatus: validateStatus,
+            #receiveDataWhenStatusError: receiveDataWhenStatusError,
+            #followRedirects: followRedirects,
+            #maxRedirects: maxRedirects,
+            #persistentConnection: persistentConnection,
+            #requestEncoder: requestEncoder,
+            #responseDecoder: responseDecoder,
+            #listFormat: listFormat,
+            #setRequestContentTypeWhenNoPayload:
+                setRequestContentTypeWhenNoPayload,
+          },
+        ),
+        returnValue: _FakeRequestOptions_7(
+          this,
+          Invocation.method(
+            #copyWith,
+            [],
+            {
+              #method: method,
+              #sendTimeout: sendTimeout,
+              #receiveTimeout: receiveTimeout,
+              #connectTimeout: connectTimeout,
+              #data: data,
+              #path: path,
+              #queryParameters: queryParameters,
+              #baseUrl: baseUrl,
+              #onReceiveProgress: onReceiveProgress,
+              #onSendProgress: onSendProgress,
+              #cancelToken: cancelToken,
+              #extra: extra,
+              #headers: headers,
+              #preserveHeaderCase: preserveHeaderCase,
+              #responseType: responseType,
+              #contentType: contentType,
+              #validateStatus: validateStatus,
+              #receiveDataWhenStatusError: receiveDataWhenStatusError,
+              #followRedirects: followRedirects,
+              #maxRedirects: maxRedirects,
+              #persistentConnection: persistentConnection,
+              #requestEncoder: requestEncoder,
+              #responseDecoder: responseDecoder,
+              #listFormat: listFormat,
+              #setRequestContentTypeWhenNoPayload:
+                  setRequestContentTypeWhenNoPayload,
+            },
+          ),
+        ),
+        returnValueForMissingStub: _FakeRequestOptions_7(
+          this,
+          Invocation.method(
+            #copyWith,
+            [],
+            {
+              #method: method,
+              #sendTimeout: sendTimeout,
+              #receiveTimeout: receiveTimeout,
+              #connectTimeout: connectTimeout,
+              #data: data,
+              #path: path,
+              #queryParameters: queryParameters,
+              #baseUrl: baseUrl,
+              #onReceiveProgress: onReceiveProgress,
+              #onSendProgress: onSendProgress,
+              #cancelToken: cancelToken,
+              #extra: extra,
+              #headers: headers,
+              #preserveHeaderCase: preserveHeaderCase,
+              #responseType: responseType,
+              #contentType: contentType,
+              #validateStatus: validateStatus,
+              #receiveDataWhenStatusError: receiveDataWhenStatusError,
+              #followRedirects: followRedirects,
+              #maxRedirects: maxRedirects,
+              #persistentConnection: persistentConnection,
+              #requestEncoder: requestEncoder,
+              #responseDecoder: responseDecoder,
+              #listFormat: listFormat,
+              #setRequestContentTypeWhenNoPayload:
+                  setRequestContentTypeWhenNoPayload,
+            },
+          ),
+        ),
+      ) as _i2.RequestOptions);
 }
