@@ -131,8 +131,12 @@ class AwsUploadManager {
     try {
       chunkData = await _readChunkFile(start, end);
     } catch (e, stackTrace) {
-      debugPrint("AWS - error while reading file $e - $stackTrace");
-      throw UploadFileReadException(e);
+      debugPrint(
+        "AWS - error while reading part ${partUpload.number} file $e - $stackTrace",
+      );
+      throw UploadFileReadException(
+        "Error reading part ${partUpload.number} - $e",
+      );
     }
     // make call
     final mimeType = lookupMimeType(file.path);

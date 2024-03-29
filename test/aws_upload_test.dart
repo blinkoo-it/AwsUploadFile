@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:aws_upload_file/aws_upload_file.dart';
+import 'package:aws_upload_file/src/aws_upload_manager.dart';
 import 'package:aws_upload_file/src/constants.dart';
 import 'package:aws_upload_file/src/entities/complete_multipart_upload.dart';
+import 'package:aws_upload_file/src/entities/part_upload.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,9 +43,12 @@ void main() {
   late MockSharedPreferences sharedPreferences;
   String? sharedPreferencesStorage;
 
-  MockXFile createXFile({bool throwError = false}) {
+  MockXFile createXFile({
+    bool throwError = false,
+    String filePath = "filePath.mp4",
+  }) {
     final MockXFile xFile = MockXFile();
-    when(xFile.path).thenReturn("filePath.mp4");
+    when(xFile.path).thenReturn(filePath);
     if (throwError) {
       when(xFile.openRead(any, any)).thenThrow(
         Exception("random error"),
@@ -388,8 +392,8 @@ void main() {
             completeUploadUrl: "completeUrl",
           );
           stream.listen((event) {}, onError: (e) {
-            expect(e, isA<UploadPartResponseException>());
             synchronizer.complete();
+            expect(e, isA<UploadPartResponseException>());
           });
 
           await synchronizer.future;
@@ -418,8 +422,8 @@ void main() {
             completeUploadUrl: "completeUrl",
           );
           stream.listen((event) {}, onError: (e) {
-            expect(e, isA<UploadFileReadException>());
             synchronizer.complete();
+            expect(e, isA<UploadFileReadException>());
           });
 
           await synchronizer.future;
@@ -431,7 +435,141 @@ void main() {
 
   group(
     "Resume upload",
-    () {},
+    () {
+      test(
+        "Resume without init fails",
+        () async {
+          expect(
+            () => uploader.resumeUploadFile(),
+            throwsA(const TypeMatcher<UploadUninitializedException>()),
+          );
+        },
+      );
+
+      test(
+        "Resume without already running upload fails",
+        () async {
+          await uploader.config();
+
+          expect(
+            () => uploader.resumeUploadFile(),
+            throwsA(const TypeMatcher<UploadNotInProgressException>()),
+          );
+        },
+      );
+
+      test(
+        // we can't test resume working because resume regenerates the xFile from the fakePath
+        "Resume after first part request",
+        () async {
+          final XFile xFile = createXFile();
+
+          await uploader.config(chunkSize: 10);
+
+          sharedPreferencesStorage = AwsUploadManager(
+            dio: dio,
+            sharedPreferences: sharedPreferences,
+            chunkSize: 10,
+            partUploads: [
+              PartUpload(
+                url: "url1",
+                number: 1,
+                size: 10,
+                completed: true,
+                etag: "etag1",
+              ),
+              PartUpload(
+                url: "url2",
+                number: 2,
+                size: 5,
+              ),
+            ],
+            completeUploadUrl: "completeUploadUrl",
+            file: xFile,
+            fileSize: 15,
+          ).toJson();
+
+          final Completer<void> synchronizer = Completer();
+          final stream = uploader.resumeUploadFile()
+            ..listen(
+              (event) {
+                expect(event, 2 / 3);
+              },
+              onError: (error) {
+                synchronizer.complete();
+                expect(error.toString().contains("part 2"), isTrue);
+              },
+            );
+          if (!synchronizer.isCompleted) await synchronizer.future;
+
+          expect(stream.value, 2 / 3);
+        },
+      );
+
+      test(
+        // we can't test resume working because resume regenerates the xFile from the fakePath
+        "Resume with only complete request",
+        () async {
+          final XFile xFile = createXFile();
+          await uploader.config(chunkSize: 10);
+
+          sharedPreferencesStorage = AwsUploadManager(
+            dio: dio,
+            sharedPreferences: sharedPreferences,
+            chunkSize: 10,
+            partUploads: [
+              PartUpload(
+                url: "url1",
+                number: 1,
+                size: 10,
+                completed: true,
+                etag: "etag1",
+              ),
+              PartUpload(
+                url: "url2",
+                number: 2,
+                size: 5,
+                completed: true,
+                etag: "etag2",
+              ),
+            ],
+            completeUploadUrl: "completeUploadUrl",
+            file: xFile,
+            fileSize: 15,
+          ).toJson();
+
+          final part1Call = mockUploadPartRequest(
+            partUrl: "url1",
+            partSize: 10,
+            etag: "etag1",
+          );
+
+          final part2Call = mockUploadPartRequest(
+            partUrl: "url2",
+            partSize: 5,
+            etag: "etag2",
+          );
+
+          final completeUploadCall =
+              mockCompleteUploadRequest(completeUrl: "completeUploadUrl");
+
+          final stream = uploader.resumeUploadFile();
+          final emissions = await stream.toList();
+
+          expect(emissions, [1.0]);
+          verifyNever(part1Call());
+          verifyNever(part2Call());
+          final completeUploadResult = verify(completeUploadCall());
+          completeUploadResult.called(1);
+          expect(
+            completeUploadResult.captured.first,
+            CompleteMultipartUploadBody(
+              etags: {1: "etag1", 2: "etag2"},
+            ).toXML(),
+          );
+        },
+      );
+    },
   );
 
   group(
