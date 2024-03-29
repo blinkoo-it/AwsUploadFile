@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:aws_upload_file/aws_upload_file.dart';
@@ -40,14 +42,20 @@ void main() {
   late MockSharedPreferences sharedPreferences;
   String? sharedPreferencesStorage;
 
-  MockXFile createXFile() {
+  MockXFile createXFile({bool throwError = false}) {
     final MockXFile xFile = MockXFile();
     when(xFile.path).thenReturn("filePath.mp4");
-    when(xFile.openRead(any, any)).thenAnswer((realInvocation) async* {
-      final int start = realInvocation.positionalArguments[0];
-      final int end = realInvocation.positionalArguments[1];
-      yield Uint8List(end - start);
-    });
+    if (throwError) {
+      when(xFile.openRead(any, any)).thenThrow(
+        Exception("random error"),
+      );
+    } else {
+      when(xFile.openRead(any, any)).thenAnswer((realInvocation) async* {
+        final int start = realInvocation.positionalArguments[0];
+        final int end = realInvocation.positionalArguments[1];
+        yield Uint8List(end - start);
+      });
+    }
     return xFile;
   }
 
@@ -81,6 +89,32 @@ void main() {
     });
 
     return getUploadPartMockedRequest;
+  }
+
+  void mockUploadPartRequestError({
+    required String partUrl,
+    required int partSize,
+    int? responseCode,
+    Exception? exception,
+  }) {
+    if (exception == null) {
+      mockUploadPartRequest(
+        partUrl: partUrl,
+        partSize: partSize,
+        etag: "",
+        responseCode: responseCode!,
+      );
+      return;
+    }
+    when(
+      dio.put(
+        partUrl,
+        options: anyNamed("options"),
+        cancelToken: anyNamed("cancelToken"),
+        data: anyNamed("data"),
+        onSendProgress: anyNamed("onSendProgress"),
+      ),
+    ).thenThrow(exception);
   }
 
   dynamic mockCompleteUploadRequest({
@@ -300,6 +334,96 @@ void main() {
               etags: {1: "etag1", 2: "etag2", 3: "etag3", 4: "etag4"},
             ).toXML(),
           );
+        },
+      );
+
+      test(
+        "Upload part request fail: wrong status code",
+        () async {
+          final XFile xFile = createXFile();
+
+          mockUploadPartRequestError(
+            partUrl: "url1",
+            partSize: 10,
+            responseCode: 401,
+          );
+
+          await uploader.config();
+
+          final Completer<void> synchronizer = Completer();
+          ValueStream<double> stream = await uploader.uploadFile(
+            xFile,
+            fileSize: 10,
+            partUploadUrls: ["url1"],
+            completeUploadUrl: "completeUrl",
+          );
+          stream.listen((event) {}, onError: (e) {
+            expect(e, isA<UploadPartResponseException>());
+            synchronizer.complete();
+          });
+
+          await synchronizer.future;
+          expect(sharedPreferencesStorage, isNotNull);
+        },
+      );
+
+      test(
+        "Upload part request fail: communication error",
+        () async {
+          final XFile xFile = createXFile();
+
+          mockUploadPartRequestError(
+            partUrl: "url1",
+            partSize: 10,
+            exception: Exception("random error"),
+          );
+
+          await uploader.config();
+
+          final Completer<void> synchronizer = Completer();
+          ValueStream<double> stream = await uploader.uploadFile(
+            xFile,
+            fileSize: 10,
+            partUploadUrls: ["url1"],
+            completeUploadUrl: "completeUrl",
+          );
+          stream.listen((event) {}, onError: (e) {
+            expect(e, isA<UploadPartResponseException>());
+            synchronizer.complete();
+          });
+
+          await synchronizer.future;
+          expect(sharedPreferencesStorage, isNotNull);
+        },
+      );
+
+      test(
+        "Upload part request fail: read file",
+        () async {
+          final XFile xFile = createXFile(throwError: true);
+
+          mockUploadPartRequest(
+            partUrl: "url1",
+            partSize: 10,
+            etag: "etag1",
+          );
+
+          await uploader.config();
+
+          final Completer<void> synchronizer = Completer();
+          ValueStream<double> stream = await uploader.uploadFile(
+            xFile,
+            fileSize: 10,
+            partUploadUrls: ["url1"],
+            completeUploadUrl: "completeUrl",
+          );
+          stream.listen((event) {}, onError: (e) {
+            expect(e, isA<UploadFileReadException>());
+            synchronizer.complete();
+          });
+
+          await synchronizer.future;
+          expect(sharedPreferencesStorage, isNotNull);
         },
       );
     },
