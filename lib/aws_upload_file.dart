@@ -3,32 +3,37 @@ library aws_upload_file;
 import 'dart:async';
 
 import 'package:aws_upload_file/src/aws_upload_manager.dart';
+import 'package:aws_upload_file/src/constants.dart';
 import 'package:aws_upload_file/src/entities/exceptions.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:aws_upload_file/src/entities/exceptions.dart';
 
-const _defaultChunkSize = 5 * 1024 * 1024;
-const _prefsManagerKey = "awsCurrentUploadManager";
-
 // TODO add documentation to every public method
 class AwsUploadFile {
-  late SharedPreferences _prefs;
   late int _chunkSize;
+  SharedPreferences? prefs;
+  Dio? dio;
 
   bool _initialized = false;
   AwsUploadManager? currentManager;
   StreamSubscription? currentSubscription;
-  AwsUploadFile();
 
-  Future<void> config({int chunkSize = _defaultChunkSize}) async {
+  AwsUploadFile({
+    this.prefs,
+    this.dio,
+  });
+
+  Future<void> config({int chunkSize = defaultChunkSize}) async {
     if (!_initialized) {
+      dio ??= Dio();
+      prefs ??= await SharedPreferences.getInstance();
       _initialized = true;
       _chunkSize = chunkSize;
-      _prefs = await SharedPreferences.getInstance();
     }
   }
 
@@ -47,6 +52,8 @@ class AwsUploadFile {
     }
 
     currentManager = AwsUploadManager.fromUploadUrls(
+      dio: dio!,
+      sharedPreferences: prefs!,
       chunkSize: _chunkSize,
       partUploadUrls: partUploadUrls,
       completeUploadUrl: completeUploadUrl,
@@ -100,8 +107,8 @@ class AwsUploadFile {
   }
 
   Future<void> _storeManager() async {
-    final result = await _prefs.setString(
-        _prefsManagerKey, currentManager?.toJson() ?? "");
+    final result =
+        await prefs!.setString(prefsManagerKey, currentManager?.toJson() ?? "");
     if (!result) {
       debugPrint(
         "AWS-UPLOAD-FILE: upload status not saved in shared preferences",
@@ -110,7 +117,7 @@ class AwsUploadFile {
   }
 
   Future<void> _cancelStoredManager() async {
-    final result = await _prefs.remove(_prefsManagerKey);
+    final result = await prefs!.remove(prefsManagerKey);
     if (!result) {
       debugPrint(
         "AWS-UPLOAD-FILE: upload status not deleted in shared preferences",
@@ -121,7 +128,12 @@ class AwsUploadFile {
   AwsUploadManager? _retrieveManager() {
     final json = _getStoredManagerJson();
     if (json == null) return null;
-    return AwsUploadManager.fromJson(json);
+    return AwsUploadManager.fromJson(
+      json,
+      dio: dio!,
+      sharedPreferences: prefs!,
+      onDone: cancelUpload,
+    );
   }
 
   void _subscribeToChunkCompletion() {
@@ -141,6 +153,6 @@ class AwsUploadFile {
   }
 
   String? _getStoredManagerJson() {
-    return _prefs.getString(_prefsManagerKey);
+    return prefs!.getString(prefsManagerKey);
   }
 }

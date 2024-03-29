@@ -12,8 +12,11 @@ import 'package:mime/mime.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:aws_upload_file/src/entities/part_upload.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AwsUploadManager {
+  final Dio dio;
+  final SharedPreferences sharedPreferences;
   final int chunkSize;
   final List<PartUpload> partUploads;
   final String completeUploadUrl;
@@ -24,8 +27,6 @@ class AwsUploadManager {
   final BehaviorSubject<Map<int, int>> _progressSubj;
   final BehaviorSubject<int> _chunkCompletedSubj;
 
-  final dio = Dio();
-
   ValueStream<int> get _progressSizeStream => _progressSubj
       // sum the sent bytes for each part
       .map((map) => map.values.fold(0, (a, b) => a + b))
@@ -34,7 +35,7 @@ class AwsUploadManager {
   ValueStream<double> get progressStream => _progressSizeStream
       // calculate percentage of sent bytes
       .map((sum) => sum / fileSize)
-      // avoid to emit changes lesser than 0,5%
+      // avoid to emit changes lower than 0,5%
       .distinct(
         (old, current) => (old - current).abs() < 0.005,
       )
@@ -45,6 +46,8 @@ class AwsUploadManager {
   final CancelToken _cancelToken = CancelToken();
 
   AwsUploadManager({
+    required this.dio,
+    required this.sharedPreferences,
     required this.chunkSize,
     required this.partUploads,
     required this.completeUploadUrl,
@@ -57,6 +60,8 @@ class AwsUploadManager {
   }
 
   AwsUploadManager.fromUploadUrls({
+    required this.dio,
+    required this.sharedPreferences,
     required this.chunkSize,
     required List<String> partUploadUrls,
     required this.completeUploadUrl,
@@ -234,6 +239,8 @@ class AwsUploadManager {
 
   factory AwsUploadManager.fromMap(
     Map<String, dynamic> map, {
+    required Dio dio,
+    required SharedPreferences sharedPreferences,
     void Function()? onDone,
   }) {
     return AwsUploadManager(
@@ -246,11 +253,23 @@ class AwsUploadManager {
       file: XFile(map['file'] as String),
       fileSize: map['fileSize'] as int,
       onDone: onDone,
+      dio: dio,
+      sharedPreferences: sharedPreferences,
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory AwsUploadManager.fromJson(String source) =>
-      AwsUploadManager.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory AwsUploadManager.fromJson(
+    String source, {
+    required Dio dio,
+    required SharedPreferences sharedPreferences,
+    void Function()? onDone,
+  }) =>
+      AwsUploadManager.fromMap(
+        json.decode(source) as Map<String, dynamic>,
+        dio: dio,
+        sharedPreferences: sharedPreferences,
+        onDone: onDone,
+      );
 }
