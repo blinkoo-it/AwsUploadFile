@@ -574,6 +574,84 @@ void main() {
 
   group(
     "Cancel upload",
-    () {},
+    () {
+      test(
+        "Cancel without init fails",
+        () async {
+          expect(
+            () => uploader.cancelUpload(),
+            throwsA(const TypeMatcher<UploadUninitializedException>()),
+          );
+        },
+      );
+
+      test(
+        "Cancel without already running upload fails",
+        () async {
+          await uploader.config();
+
+          expect(
+            () => uploader.cancelUpload(),
+            throwsA(const TypeMatcher<UploadNotInProgressException>()),
+          );
+        },
+      );
+
+      test(
+        "Cancel current request works",
+        () async {
+          final XFile xFile = createXFile();
+          await uploader.config(chunkSize: 10);
+
+          sharedPreferencesStorage = AwsUploadManager(
+            dio: dio,
+            sharedPreferences: sharedPreferences,
+            chunkSize: 10,
+            partUploads: [
+              PartUpload(
+                url: "url1",
+                number: 1,
+                size: 10,
+                completed: true,
+                etag: "etag1",
+              ),
+              PartUpload(
+                url: "url2",
+                number: 2,
+                size: 5,
+                completed: false,
+              ),
+            ],
+            completeUploadUrl: "completeUploadUrl",
+            file: xFile,
+            fileSize: 15,
+          ).toJson();
+
+          final part2Call = mockUploadPartRequest(
+            partUrl: "url2",
+            partSize: 5,
+            etag: "etag2",
+            responseCode: 500,
+          );
+
+          final completeUploadCall =
+              mockCompleteUploadRequest(completeUrl: "completeUploadUrl");
+
+          final Completer<void> synchronizer = Completer();
+
+          uploader.resumeUploadFile().listen(
+            (event) {},
+            onDone: () {
+              synchronizer.complete();
+            },
+          );
+          await uploader.cancelUpload();
+          if (!synchronizer.isCompleted) await synchronizer.future;
+
+          verifyNever(part2Call());
+          verifyNever(completeUploadCall());
+        },
+      );
+    },
   );
 }
